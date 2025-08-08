@@ -1,5 +1,6 @@
 import { slugify } from "~/utils/formatters";
 import { boardModel } from "~/models/boardModel";
+import ApiError from "~/utils/ApiError";
 
 const createNew = async (reqBody) => {
   // eslint-disable-next-line no-useless-catch
@@ -18,6 +19,19 @@ const createNew = async (reqBody) => {
     throw error;
   }
 }
+const getDetails = async (boardId) => {
+  // eslint-disable-next-line no-useless-catch
+  try {
+    const boardDetails = await boardModel.getDetails(boardId);
+    if (!boardDetails) {
+      throw ApiError("Board not found");
+    }
+    return boardDetails;
+  } catch (error) {
+    throw error;
+  }
+}
 export const boardService = {
-  createNew
+  createNew,
+  getDetails
 }

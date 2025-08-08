@@ -11,10 +11,15 @@ import { env } from "~/config/environment.js";
 import { CLOSE_DB, CONNECT_DB } from "~/config/mongodb.js";
 import { APIs_V1 } from "~/routes/v1/index.js";
 import { errorHandlingMiddleware } from "~/middlewares/errorHandllingMiddleware.js";
+import cors from "cors";
+import { corsOptions } from "~/config/cors";
 
-const app = express();
 
 const START_SERVER = () => {
+  const app = express();
+
+  app.use(cors(corsOptions));
+
   app.use(express.json());
 
   app.use("/v1", APIs_V1);
