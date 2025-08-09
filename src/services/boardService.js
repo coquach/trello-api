@@ -1,6 +1,7 @@
 import { slugify } from "~/utils/formatters";
 import { boardModel } from "~/models/boardModel";
 import ApiError from "~/utils/ApiError";
+import { cloneDeep } from "lodash";
 
 const createNew = async (reqBody) => {
   // eslint-disable-next-line no-useless-catch
@@ -26,7 +27,16 @@ const getDetails = async (boardId) => {
     if (!boardDetails) {
       throw ApiError("Board not found");
     }
-    return boardDetails;
+
+    const resBoard = cloneDeep(boardDetails);
+
+    resBoard.columns.forEach(column => {
+      column.cards = resBoard.cards.filter(card => card.columnId.equals(column._id));
+    });
+
+    delete resBoard.cards; // Remove cards from the main board object
+
+    return resBoard;
   } catch (error) {
     throw error;
   }
