@@ -26,10 +26,18 @@ const START_SERVER = () => {
 
   app.use(errorHandlingMiddleware);
 
-  app.listen(env.APP_PORT, env.APP_HOST, () => {
-    // eslint-disable-next-line no-console
-    console.log(`Hello Trung Quan Dev, I am running at ${env.APP_HOST}:${env.APP_PORT}/`);
-  });
+  if (env.BUILD_MODE === 'production') {
+    app.listen(process.env.PORT, () => {
+      // eslint-disable-next-line no-console
+      console.log(`Hello VinhCo, I am running at port:${process.env.PORT}/`);
+    });
+  } else {
+    app.listen(env.APP_PORT, env.APP_HOST, () => {
+      // eslint-disable-next-line no-console
+      console.log(`Hello VinhCo, I am running at ${env.APP_HOST}:${env.APP_PORT}/`);
+    });
+  }
+
 
   exitHook(() => {
     // eslint-disable-next-line no-console
