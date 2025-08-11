@@ -1,4 +1,6 @@
 import Joi from 'joi'
+import { ObjectId } from 'mongodb'
+import { GET_DB } from '~/config/mongodb'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 // Define Collection (name & schema)
@@ -15,7 +17,65 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
   _destroy: Joi.boolean().default(false)
 })
 
+const INVALID_UPDATE_FIELDS = ["_id", "boardId", "createdAt"]
+
+
+const validatBeforeCreate = async (data) => {
+  return await CARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false });
+}
+
+const createdNew = async (data) => {
+  try {
+    const validatedData = await validatBeforeCreate(data);
+    const newCardToAdd = {
+      ...validatedData,
+      boardId : new ObjectId(String(validatedData.boardId)),
+      columnId: new ObjectId(String(validatedData.columnId))
+    }
+    const db = await GET_DB();
+    const result = await db.collection(CARD_COLLECTION_NAME).insertOne(newCardToAdd);
+    return result;
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+const findOneById = async (id) => {
+  try {
+    const db = await GET_DB()
+    const result = await db.collection(CARD_COLLECTION_NAME).findOne({
+      _id: new ObjectId(String(id))
+    })
+    return result
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+const update = async (cardId, cardData) => {
+  try {
+    Object.keys(cardData).forEach(fieldName => {
+      if (INVALID_UPDATE_FIELDS.includes(fieldName))
+        delete cardData[fieldName]
+    })
+
+    if (cardData.columnId) cardData.columnId= new ObjectId(String(cardData.columnId))
+
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(String(cardId)) },
+      { $set: cardData },
+      { returnDocument: "after" }
+    )
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const cardModel = {
   CARD_COLLECTION_NAME,
-  CARD_COLLECTION_SCHEMA
+  CARD_COLLECTION_SCHEMA,
+  createdNew,
+  findOneById,
+  update
 }
