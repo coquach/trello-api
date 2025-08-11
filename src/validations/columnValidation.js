@@ -31,7 +31,21 @@ const update = async (req, res, next) => {
   }
 }
 
+const deleteItem = async (req, res, next) => {
+  const correctConditions = Joi.object({
+    id: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  });
+  try {
+    await correctConditions.validateAsync(req.params, { abortEarly: false, allowUnknown: true });
+    next();
+  } catch (error) {
+    const customeError = new ApiError(StatusCodes.BAD_REQUEST, error.message)
+    next(customeError);
+  }
+}
+
 export const columnValidation = {
   createNew,
-  update
+  update,
+  deleteItem
 }
