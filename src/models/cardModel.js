@@ -20,13 +20,13 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
 const INVALID_UPDATE_FIELDS = ["_id", "boardId", "createdAt"]
 
 
-const validatBeforeCreate = async (data) => {
+const validateBeforeCreate = async (data) => {
   return await CARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false });
 }
 
 const createdNew = async (data) => {
   try {
-    const validatedData = await validatBeforeCreate(data);
+    const validatedData = await validateBeforeCreate(data);
     const newCardToAdd = {
       ...validatedData,
       boardId : new ObjectId(String(validatedData.boardId)),

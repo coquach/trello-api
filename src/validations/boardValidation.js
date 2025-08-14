@@ -14,8 +14,8 @@ const createNew = async (req, res, next) => {
     await correctConditions.validateAsync(req.body, { abortEarly: false });
     next();
   } catch (error) {
-    const customeError = new ApiError(StatusCodes.BAD_REQUEST, error.message)
-    next(customeError);
+    const customError = new ApiError(StatusCodes.BAD_REQUEST, error.message)
+    next(customError);
   }
 }
 
@@ -30,8 +30,8 @@ const update = async (req, res, next) => {
     await correctConditions.validateAsync(req.body, { abortEarly: false, allowUnknown: true });
     next();
   } catch (error) {
-    const customeError = new ApiError(StatusCodes.BAD_REQUEST, new Error(error).message)
-    next(customeError);
+    const customError = new ApiError(StatusCodes.BAD_REQUEST, new Error(error).message)
+    next(customError);
   }
 }
 
@@ -47,8 +47,8 @@ const moveCardToDifferentColumn = async (req, res, next) => {
     await correctConditions.validateAsync(req.body, { abortEarly: false, allowUnknown: true });
     next();
   } catch (error) {
-    const customeError = new ApiError(StatusCodes.BAD_REQUEST, error.message)
-    next(customeError);
+    const customError = new ApiError(StatusCodes.BAD_REQUEST, error.message)
+    next(customError);
   }
 }
 

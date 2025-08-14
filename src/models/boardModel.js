@@ -1,10 +1,10 @@
 import Joi from "joi";
-import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
+import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
-import { ObjectId, ReturnDocument } from "mongodb";
 import { BOARD_TYPE } from "~/utils/constants";
-import { columnModel } from "./columnModel";
+import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
 import { cardModel } from "./cardModel";
+import { columnModel } from "./columnModel";
 
 const BOARD_COLLECTION_NAME = 'boards'
 const BOARD_COLLECTION_SCHEMA = Joi.object({
@@ -25,13 +25,13 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
 
 const INVALID_UPDATE_FIELDS = ["_id", "createdAt"]
 
-const validatBeforeCreate = async (data) => {
+const validateBeforeCreate = async (data) => {
   return await BOARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false });
 }
 
 const createdNew = async (data) => {
   try {
-    const validatedData = await validatBeforeCreate(data);
+    const validatedData = await validateBeforeCreate(data);
     const db = await GET_DB();
     const result = await db.collection(BOARD_COLLECTION_NAME).insertOne(validatedData);
     return result;
