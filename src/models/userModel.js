@@ -20,7 +20,7 @@ const USER_COLLECTION_NAME_SCHEMA = Joi.object({
   displayName: Joi.string().required().trim().strict(),
   avatar: Joi.string().default(null),
   role: Joi.string().valid(USER_ROLES.CLIENT, USER_ROLES.ADMIN).default(USER_ROLES.CLIENT),
-  isActive: Joi.boolean().default(false),
+  isActive: Joi.boolean().default(true),
   verifyToken: Joi.string(),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),

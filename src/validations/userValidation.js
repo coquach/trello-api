@@ -17,7 +17,37 @@ const createNew = async (req, res, next) => {
   }
 }
 
+const verifyAccount = async (req, res, next) => {
+  const correctConditions = Joi.object({
+    email: Joi.string().required().pattern(EMAIL_RULE).message(EMAIL_RULE_MESSAGE),
+    token: Joi.string().required()
+  })
+  try {
+    await correctConditions.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (error) {
+    const customError = new ApiError(StatusCodes.UNAUTHORIZED, error.message)
+    next(customError);
+  }
+}
+
+const login = async (req, res, next) => {
+  const correctConditions = Joi.object({
+    email: Joi.string().required().pattern(EMAIL_RULE).message(EMAIL_RULE_MESSAGE),
+    password: Joi.string().required().pattern(PASSWORD_RULE).message(PASSWORD_RULE_MESSAGE)
+  })
+  try {
+    await correctConditions.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (error) {
+    const customError = new ApiError(StatusCodes.UNAUTHORIZED, error.message)
+    next(customError);
+  }
+}
+
 
 export const userValidation = {
-  createNew
+  createNew,
+  verifyAccount,
+  login
 }
