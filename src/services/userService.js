@@ -1,14 +1,11 @@
 /* eslint-disable no-useless-catch */
 import bcryptjs from "bcryptjs";
 import { StatusCodes } from "http-status-codes";
-import { ExplainVerbosity } from "mongodb";
 import { v4 as uuidv4 } from 'uuid';
 import { env } from "~/config/environment";
 import { userModel } from "~/models/userModel";
-import { BrevoProvider } from "~/providers/brevoProvider";
 import { JwtProvider } from "~/providers/JwtProvider";
 import ApiError from "~/utils/ApiError";
-import { WEBSITE_DOMAIN } from "~/utils/constants";
 import { pickUser } from "~/utils/formatters";
 
 const createNew = async (reqBody) => {
@@ -90,11 +87,11 @@ const login = async (reqBody) => {
       _id: existUser._id,
       email: existUser.email
     }
-    const accessToken = await JwtProvider.generateToken(userInfo, env.ACCESS_TOKEN_SECRET_SIGNATURE, 5)
-    const refreshToken = await JwtProvider.generateToken(userInfo, env.REFRESH_TOKEN_SECRET_SIGNATURE, 20)
+    const accessToken = await JwtProvider.generateToken(userInfo, env.ACCESS_TOKEN_SECRET_SIGNATURE, env.ACCESS_TOKEN_LIFE)
+    const refreshToken = await JwtProvider.generateToken(userInfo, env.REFRESH_TOKEN_SECRET_SIGNATURE, env.REFRESH_TOKEN_LIFE)
 
 
-    return { accessToken, refreshToken, ...pickUser(existUser) }
+    return { accessToken, refreshToken, existUser: pickUser(existUser) }
   } catch (error) {
     throw error
   }
@@ -109,8 +106,32 @@ const refreshToken = async (clientRefreshToken) => {
       email: refreshTokenDecoded.email
     }
 
-    const accessToken = await JwtProvider.generateToken(userInfo, env.ACCESS_TOKEN_SECRET_SIGNATURE, 5)
+    const accessToken = await JwtProvider.generateToken(userInfo, env.ACCESS_TOKEN_SECRET_SIGNATURE, env.ACCESS_TOKEN_LIFE)
     return { accessToken }
+  } catch (error) {
+    throw error
+  }
+}
+
+const update = async (userId, reqBody) => {
+  try {
+    const existUser = await userModel.findOneById(userId)
+    if (!existUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found')
+    if (!existUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not active')
+    let updatedUser = {}
+
+    if (reqBody.current_password && reqBody.new_password) {
+      if (!bcryptjs.compareSync(reqBody.current_password, existUser.password)) {
+        throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Current password is incorrect')
+      }
+      updatedUser = await userModel.update(userId, {
+        password: bcryptjs.hashSync(reqBody.new_password, 8)
+      })
+    } else {
+      updatedUser = await userModel.update(userId, reqBody)
+    }
+
+    return pickUser(updatedUser)
   } catch (error) {
     throw error
   }
@@ -120,5 +141,6 @@ export const userService = {
   createNew,
   verifyAccount,
   login,
-  refreshToken
+  refreshToken,
+  update
 }
