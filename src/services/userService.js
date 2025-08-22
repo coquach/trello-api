@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { v4 as uuidv4 } from 'uuid';
 import { env } from "~/config/environment";
 import { userModel } from "~/models/userModel";
+import { CloudinaryProvider } from "~/providers/CloudinaryProvider";
 import { JwtProvider } from "~/providers/JwtProvider";
 import ApiError from "~/utils/ApiError";
 import { pickUser } from "~/utils/formatters";
@@ -113,7 +114,7 @@ const refreshToken = async (clientRefreshToken) => {
   }
 }
 
-const update = async (userId, reqBody) => {
+const update = async (userId, reqBody, userAvatar) => {
   try {
     const existUser = await userModel.findOneById(userId)
     if (!existUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found')
@@ -127,7 +128,14 @@ const update = async (userId, reqBody) => {
       updatedUser = await userModel.update(userId, {
         password: bcryptjs.hashSync(reqBody.new_password, 8)
       })
-    } else {
+    } else if (userAvatar) {
+      const uploadResult = await CloudinaryProvider.streamUpload(userAvatar.buffer, 'trello-mern-advanced/user-avatar')
+
+      updatedUser = await userModel.update(userId, {
+        avatar: uploadResult.secure_url
+      })
+    }
+    else {
       updatedUser = await userModel.update(userId, reqBody)
     }
 
