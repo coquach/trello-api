@@ -7,6 +7,7 @@ import { BOARD_TYPE } from "~/utils/constants";
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
 import { cardModel } from "./cardModel";
 import { columnModel } from "./columnModel";
+import ApiError from "~/utils/ApiError";
 
 const BOARD_COLLECTION_NAME = 'boards'
 const BOARD_COLLECTION_SCHEMA = Joi.object({
@@ -15,15 +16,15 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
   description: Joi.string().required().min(3).max(256).trim().strict(),
   type: Joi.string().valid(...Object.values(BOARD_TYPE)).required(),
   // Lưu ý các item trong mảng columnOrderIds là ObjectId nên cần thêm pattern cho chuẩn nhé, (lúc quay video số 57 mình quên nhưng sang đầu video số 58 sẽ có nhắc lại về cái này.)
-  columnOrderIds: Joi.array().required().items(
+  columnOrderIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
 
-  ownerIds: Joi.array().required().items(
+  ownerIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
 
-  memberIds: Joi.array().required().items(
+  memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
 
@@ -39,11 +40,15 @@ const validateBeforeCreate = async (data) => {
   return await BOARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false });
 }
 
-const createdNew = async (data) => {
+const createdNew = async (userId, data) => {
   try {
     const validatedData = await validateBeforeCreate(data);
+    const createdData = {
+      ...validatedData,
+      ownerIds: [new ObjectId(String(userId))]
+    }
     const db = await GET_DB();
-    const result = await db.collection(BOARD_COLLECTION_NAME).insertOne(validatedData);
+    const result = await db.collection(BOARD_COLLECTION_NAME).insertOne(createdData);
     return result;
   } catch (error) {
     throw new Error(error);
@@ -62,14 +67,24 @@ const findOneById = async (id) => {
   }
 }
 
-const getDetails = async (id) => {
+const getDetails = async (userId, boardId) => {
   try {
+    const queryConditions = [
+      { _id: new ObjectId(String(boardId)) },
+      { _destroy: false },
+      {
+        $or: [
+          { ownerIds: { $all: [new ObjectId(String(userId))] } },
+          { memberIds: { $all: [new ObjectId(String(userId))] } }
+        ]
+      }
+    ];
     const db = await GET_DB()
+
     const result = await db.collection(BOARD_COLLECTION_NAME).aggregate([
       {
         $match: {
-          _id: new ObjectId(String(id)),
-          _destroy: false
+          $and: queryConditions
         }
       },
       {
@@ -172,7 +187,7 @@ const getBoards = async (userId, page, itemsPerPage) => {
           }
         }
       ],
-      { collation: { locale: 'en' } }
+      { collation: { locale: 'en', strength: 1 } }
     ).toArray();
 
     const res = query[0];
@@ -181,7 +196,7 @@ const getBoards = async (userId, page, itemsPerPage) => {
       totalBoards: res?.queryTotalBoards[0]?.countedAllBoards || 0
     };
   } catch (error) {
-    throw error
+    throw new Error(error);
   }
 
 }

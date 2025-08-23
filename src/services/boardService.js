@@ -7,14 +7,14 @@ import { cardModel } from "~/models/cardModel";
 import { nextPowerTwo } from "add";
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from "~/utils/constants";
 
-const createNew = async (reqBody) => {
+const createNew = async (userId, reqBody) => {
   // eslint-disable-next-line no-useless-catch
   try {
     const newBoard = {
       ...reqBody,
       slug: slugify(reqBody.title)
     }
-    const createdBoard = await boardModel.createdNew(newBoard);
+    const createdBoard = await boardModel.createdNew(userId, newBoard);
     if (!createdBoard.acknowledged) {
       throw new Error("Failed to create new board");
     }
@@ -24,10 +24,10 @@ const createNew = async (reqBody) => {
     throw error;
   }
 }
-const getDetails = async (boardId) => {
+const getDetails = async (userId, boardId) => {
   // eslint-disable-next-line no-useless-catch
   try {
-    const boardDetails = await boardModel.getDetails(boardId);
+    const boardDetails = await boardModel.getDetails(userId, boardId);
     if (!boardDetails) {
       throw new ApiError("Board not found");
     }
