@@ -6,6 +6,7 @@ import { boardValidation } from '~/validations/boardValidation.js';
 const Router = express.Router();
 
 Router.route("/")
+  .get(authMiddleware.isAuthorized, boardController.getBoards)
   .post(authMiddleware.isAuthorized, boardValidation.createNew, boardController.createNew);
 
 Router.route("/:id")

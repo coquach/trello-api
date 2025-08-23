@@ -1,6 +1,8 @@
+/* eslint-disable no-useless-catch */
 import Joi from "joi";
 import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
+import { pagingSkipValue } from "~/utils/algorithms";
 import { BOARD_TYPE } from "~/utils/constants";
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
 import { cardModel } from "./cardModel";
@@ -14,6 +16,14 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
   type: Joi.string().valid(...Object.values(BOARD_TYPE)).required(),
   // Lưu ý các item trong mảng columnOrderIds là ObjectId nên cần thêm pattern cho chuẩn nhé, (lúc quay video số 57 mình quên nhưng sang đầu video số 58 sẽ có nhắc lại về cái này.)
   columnOrderIds: Joi.array().required().items(
+    Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ).default([]),
+
+  ownerIds: Joi.array().required().items(
+    Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ).default([]),
+
+  memberIds: Joi.array().required().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
 
@@ -134,6 +144,48 @@ const update = async (boardId, boardData) => {
   }
 }
 
+const getBoards = async (userId, page, itemsPerPage) => {
+  try {
+    const queryConditions = [
+      { _destroy: false },
+      {
+        $or: [
+          { ownerIds: { $all: [new ObjectId(String(userId))] } },
+          { memberIds: { $all: [new ObjectId(String(userId))] } }
+        ]
+      }
+    ];
+
+    const query = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate(
+      [
+        { $match: { $and: queryConditions } },
+        { $sort: { title: 1 } },
+        {
+          $facet: {
+            'queryBoards': [
+              { $skip: pagingSkipValue(page, itemsPerPage) },
+              { $limit: itemsPerPage }
+            ],
+            'queryTotalBoards': [
+              { $count: 'countedAllBoards' }
+            ]
+          }
+        }
+      ],
+      { collation: { locale: 'en' } }
+    ).toArray();
+
+    const res = query[0];
+    return {
+      boards: res.queryBoards || [],
+      totalBoards: res?.queryTotalBoards[0]?.countedAllBoards || 0
+    };
+  } catch (error) {
+    throw error
+  }
+
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
@@ -142,5 +194,6 @@ export const boardModel = {
   getDetails,
   pushColumnOrderIds,
   pullColumnOrderIds,
-  update
+  update,
+  getBoards
 }

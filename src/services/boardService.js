@@ -1,9 +1,11 @@
 import { slugify } from "~/utils/formatters";
 import { boardModel } from "~/models/boardModel";
 import ApiError from "~/utils/ApiError";
-import { cloneDeep } from "lodash";
+import { cloneDeep, get } from "lodash";
 import { columnModel } from "~/models/columnModel";
 import { cardModel } from "~/models/cardModel";
+import { nextPowerTwo } from "add";
+import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from "~/utils/constants";
 
 const createNew = async (reqBody) => {
   // eslint-disable-next-line no-useless-catch
@@ -71,14 +73,28 @@ const moveCardToDifferentColumn = async (reqBody) => {
     await cardModel.update(reqBody.currentCardId, {
       columnId: reqBody.nextColumnId
     })
-    return { updateResult: "Successfull" }
+    return { updateResult: "Successfully" }
   } catch (error) {
     throw error;
+  }
+}
+
+const getBoards = async (userId, page, itemsPerPage) => {
+  // eslint-disable-next-line no-useless-catch
+  try {
+    if (!page) page = DEFAULT_PAGE
+    if (!itemsPerPage) itemsPerPage = DEFAULT_ITEMS_PER_PAGE
+
+    const results = await boardModel.getBoards(userId, parseInt(page, 10), parseInt(itemsPerPage, 10));
+    return results
+  } catch (error) {
+    throw error
   }
 }
 export const boardService = {
   createNew,
   getDetails,
   update,
-  moveCardToDifferentColumn
+  moveCardToDifferentColumn,
+  getBoards
 }
