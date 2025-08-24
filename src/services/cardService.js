@@ -1,5 +1,6 @@
 import { cardModel } from "~/models/cardModel";
 import { columnModel } from "~/models/columnModel";
+import { CloudinaryProvider } from "~/providers/CloudinaryProvider";
 
 const createNew = async (reqBody) => {
   // eslint-disable-next-line no-useless-catch
@@ -20,14 +21,25 @@ const createNew = async (reqBody) => {
     throw error;
   }
 }
-const update = async (cardId, reqBody) => {
+const update = async (cardId, reqBody, cardCoverFile) => {
   // eslint-disable-next-line no-useless-catch
   try {
     const updateCard = {
       ...reqBody,
       updatedAt: Date.now()
     }
-    const updatedCard = await cardModel.update(cardId, updateCard);
+
+    let updatedCard = {}
+
+    if (cardCoverFile) {
+      const uploadResult = await CloudinaryProvider.streamUpload(cardCoverFile.buffer, 'trello-mern-advanced/card-cover')
+
+      updatedCard = await cardModel.update(cardId, {
+        cover: uploadResult.secure_url
+      })
+    } else {
+      updatedCard = await cardModel.update(cardId, updateCard);
+    }
 
     return updatedCard;
   } catch (error) {
