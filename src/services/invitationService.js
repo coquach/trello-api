@@ -20,6 +20,13 @@ const createNewBoardInvitation = async (inviterId, data) => {
       throw new ApiError(StatusCodes.NOT_FOUND, "Inviter, invitee, or board not found");
     }
 
+    if (data.inviteeEmail === inviter.email) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Invitee email must be different from inviter email!')
+    }
+    if ([...board.memberIds, ...board.ownerIds].some(id => id.equals(invitee._id))) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Invitee was in board')
+    }
+
     const newInvitationData = {
       inviterId: inviterId,
       inviteeId: invitee._id.toString(),
@@ -31,7 +38,7 @@ const createNewBoardInvitation = async (inviterId, data) => {
 
     }
     console.log("🚀 ~ createNewBoardInvitation ~ newInvitationData:", newInvitationData)
-    
+
     const createdInvitation = await invitationModel.createNewBoardInvitation(newInvitationData)
     const getInvitation = await invitationModel.findOneById(createdInvitation.insertedId)
 
@@ -46,6 +53,24 @@ const createNewBoardInvitation = async (inviterId, data) => {
   }
 }
 
+const getInvitations = async (userId) => {
+  try {
+    const getInvitations = await invitationModel.findByUser(userId)
+
+    const resInvitations = getInvitations.map(i => ({
+      ...i,
+      inviter: i.inviter[0] || {},
+      invitee: i.invitee[0] || {},
+      board: i.board[0] || {}
+    }))
+
+    return resInvitations
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const invitationService = {
-  createNewBoardInvitation
+  createNewBoardInvitation,
+  getInvitations
 }
