@@ -16,7 +16,7 @@ const createNew = async (req, res, next) => {
 const verifyAccount = async (req, res, next) => {
   try {
     const result = await userService.verifyAccount(req.body);
-    res.status(StatusCodes.CREATED).json(result);
+    res.status(StatusCodes.OK).json(result);
   } catch (error) {
     next(error);
   }

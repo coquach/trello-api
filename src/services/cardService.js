@@ -21,7 +21,7 @@ const createNew = async (reqBody) => {
     throw error;
   }
 }
-const update = async (cardId, reqBody, cardCoverFile) => {
+const update = async (cardId, reqBody, cardCoverFile, userInfo) => {
   // eslint-disable-next-line no-useless-catch
   try {
     const updateCard = {
@@ -37,6 +37,14 @@ const update = async (cardId, reqBody, cardCoverFile) => {
       updatedCard = await cardModel.update(cardId, {
         cover: uploadResult.secure_url
       })
+    } else if (updateCard.commentToAdd) {
+      const commentData = {
+        ...updateCard.commentToAdd,
+        commentedAt: Date.now(),
+        userId: userInfo._id,
+        userEmail: userInfo.email
+      }
+      updatedCard = await cardModel.unshiftNewComment(cardId, commentData)
     } else {
       updatedCard = await cardModel.update(cardId, updateCard);
     }

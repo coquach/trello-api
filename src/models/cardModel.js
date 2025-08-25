@@ -38,7 +38,7 @@ const createdNew = async (data) => {
     const validatedData = await validateBeforeCreate(data);
     const newCardToAdd = {
       ...validatedData,
-      boardId : new ObjectId(String(validatedData.boardId)),
+      boardId: new ObjectId(String(validatedData.boardId)),
       columnId: new ObjectId(String(validatedData.columnId))
     }
     const db = await GET_DB();
@@ -68,7 +68,7 @@ const update = async (cardId, cardData) => {
         delete cardData[fieldName]
     })
 
-    if (cardData.columnId) cardData.columnId= new ObjectId(String(cardData.columnId))
+    if (cardData.columnId) cardData.columnId = new ObjectId(String(cardData.columnId))
 
     const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(String(cardId)) },
@@ -90,11 +90,25 @@ const deleteManyByColumnId = async (columnId) => {
   }
 }
 
+const unshiftNewComment = async (cardId, commentData) => {
+  try {
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(String(cardId)) },
+      { $push: { comments: { $each: [commentData], $position: 0 } } },
+      { returnDocument: "after" }
+    )
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const cardModel = {
   CARD_COLLECTION_NAME,
   CARD_COLLECTION_SCHEMA,
   createdNew,
   findOneById,
   update,
-  deleteManyByColumnId
+  deleteManyByColumnId,
+  unshiftNewComment
 }

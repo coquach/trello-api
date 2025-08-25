@@ -79,6 +79,7 @@ const verifyAccount = async (reqBody) => {
 const login = async (reqBody) => {
   try {
     const existUser = await userModel.findOneByEmail(reqBody.email)
+    console.log("🚀 ~ login ~ existUser:", existUser._id)
 
     if (!existUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found')
     if (!existUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not active')
@@ -88,6 +89,8 @@ const login = async (reqBody) => {
       _id: existUser._id,
       email: existUser.email
     }
+    console.log("🚀 ~ login ~ userInfo:", userInfo)
+
     const accessToken = await JwtProvider.generateToken(userInfo, env.ACCESS_TOKEN_SECRET_SIGNATURE, env.ACCESS_TOKEN_LIFE)
     const refreshToken = await JwtProvider.generateToken(userInfo, env.REFRESH_TOKEN_SECRET_SIGNATURE, env.REFRESH_TOKEN_LIFE)
 

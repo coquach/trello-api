@@ -14,7 +14,7 @@ const createNew = async (req, res, next) => {
     await correctConditions.validateAsync(req.body, { abortEarly: false });
     next();
   } catch (error) {
-    const customError = new ApiError(StatusCodes.BAD_REQUEST, error.message)
+    const customError = new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, error.message)
     next(customError);
   }
 }
@@ -30,7 +30,7 @@ const update = async (req, res, next) => {
     await correctConditions.validateAsync(req.body, { abortEarly: false, allowUnknown: true });
     next();
   } catch (error) {
-    const customError = new ApiError(StatusCodes.BAD_REQUEST, new Error(error).message)
+    const customError = new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message)
     next(customError);
   }
 }

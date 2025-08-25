@@ -5,7 +5,7 @@ class ApiError extends Error {
     super(message)
 
     // Tên của cái custom Error này, nếu không set thì mặc định nó sẽ kế thừa là "Error"
-    this.name = 'ApiError'
+    this.name = ''
 
     // Gán thêm http status code của chúng ta ở đây
     this.statusCode = statusCode
