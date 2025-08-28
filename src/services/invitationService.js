@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import { pick } from "lodash";
 import { boardModel } from "~/models/boardModel";
 import { invitationModel } from "~/models/invitationModel";
 import { userModel } from "~/models/userModel";
@@ -21,10 +20,10 @@ const createNewBoardInvitation = async (inviterId, data) => {
     }
 
     if (data.inviteeEmail === inviter.email) {
-      throw new ApiError(StatusCodes.CONFLICT, 'Invitee email must be different from inviter email!')
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Invitee email must be different from inviter email!')
     }
     if ([...board.memberIds, ...board.ownerIds].some(id => id.equals(invitee._id))) {
-      throw new ApiError(StatusCodes.CONFLICT, 'Invitee was in board')
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Invitee is already a member of this board')
     }
 
     const newInvitationData = {
@@ -37,7 +36,6 @@ const createNewBoardInvitation = async (inviterId, data) => {
       }
 
     }
-    console.log("🚀 ~ createNewBoardInvitation ~ newInvitationData:", newInvitationData)
 
     const createdInvitation = await invitationModel.createNewBoardInvitation(newInvitationData)
     const getInvitation = await invitationModel.findOneById(createdInvitation.insertedId)
@@ -70,7 +68,44 @@ const getInvitations = async (userId) => {
   }
 }
 
+const updateBoardInvitation = async (userId, invitationId, status) => {
+  try {
+    const getInvitation = await invitationModel.findOneById(invitationId)
+    if (!getInvitation) throw new ApiError(StatusCodes.NOT_FOUND, 'Invitation not found!')
+
+    const boardId = getInvitation.boardInvitation.boardId
+
+    const getBoard = await boardModel.findOneById(boardId)
+    if (!getBoard) throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found')
+
+    if (status === BOARD_INVITATION_STATUS.ACCEPTED && [...getBoard.memberIds, ...getBoard.ownerIds].some(id => id.equals(userId))) {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'You are already a member of this board')
+    }
+
+    const updateData = {
+      boardInvitation: {
+        ...getInvitation.boardInvitation,
+        status: status
+      }
+    }
+
+    const updatedInvitation = await invitationModel.update(invitationId, updateData)
+
+    if (updatedInvitation.boardInvitation.status === BOARD_INVITATION_STATUS.ACCEPTED) {
+      await boardModel.pushMemberIds(boardId, userId)
+    }
+
+    return updatedInvitation
+
+  } catch (error) {
+    throw new Error(error)
+  }
+
+
+}
+
 export const invitationService = {
   createNewBoardInvitation,
-  getInvitations
+  getInvitations,
+  updateBoardInvitation
 }

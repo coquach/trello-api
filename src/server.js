@@ -1,9 +1,4 @@
-/* eslint-disable no-console */
-/**
- * Updated by trungquandev.com's author on August 17 2023
- * YouTube: https://youtube.com/@trungquandev
- * "A bit of fragrance clings to the hand that gives flowers!"
- */
+
 
 import express from "express";
 import exitHook from "async-exit-hook";
@@ -14,6 +9,9 @@ import { errorHandlingMiddleware } from "~/middlewares/errorHandllingMiddleware.
 import cors from "cors";
 import { corsOptions } from "~/config/cors";
 import cookieParser from "cookie-parser";
+import http from 'http'
+import socketIo from 'socket.io'
+import { inviteUserToBoardSocket } from "./sockets/inviteUserToBoardSocket";
 
 
 const START_SERVER = () => {
@@ -35,13 +33,22 @@ const START_SERVER = () => {
 
   app.use(errorHandlingMiddleware);
 
+  const server = http.createServer(app)
+
+  const io = socketIo(server, { cors: corsOptions })
+
+  io.on('connection', (socket) => {
+
+    inviteUserToBoardSocket(socket)
+  })
+
   if (env.BUILD_MODE === 'production') {
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
       // eslint-disable-next-line no-console
       console.log(`Hello VinhCo, I am running at port:${process.env.PORT}/`);
     });
   } else {
-    app.listen(env.APP_PORT, env.APP_HOST, () => {
+    server.listen(env.APP_PORT, env.APP_HOST, () => {
       // eslint-disable-next-line no-console
       console.log(`Hello VinhCo, I am running at ${env.APP_HOST}:${env.APP_PORT}/`);
     });

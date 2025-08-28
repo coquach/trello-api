@@ -5,8 +5,6 @@ import { invitationService } from "~/services/invitationService";
 const createNewBoardInvitation = async (req, res, next) => {
   try {
     const inviterId = req.jwtDecoded._id
-    console.log("🚀 ~ createNewBoardInvitation ~ inviterId:", inviterId)
-    
     const createdInvitation = await invitationService.createNewBoardInvitation(inviterId, req.body);
 
     res.status(StatusCodes.CREATED).json(createdInvitation);
@@ -25,7 +23,24 @@ const getInvitations = async (req, res, next) => {
   }
 }
 
+const updateBoardInvitation = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const { invitationId } = req.params
+    const status = req.body.status
+    console.log("🚀 ~ updateBoardInvitation ~ status:", status)
+
+
+    const updatedInvitation = await invitationService.updateBoardInvitation(userId, invitationId, status)
+
+    res.status(StatusCodes.OK).json(updatedInvitation)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const invitationController = {
   createNewBoardInvitation,
-  getInvitations
+  getInvitations,
+  updateBoardInvitation
 }
