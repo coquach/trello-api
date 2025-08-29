@@ -181,7 +181,7 @@ const update = async (boardId, boardData) => {
   }
 }
 
-const getBoards = async (userId, page, itemsPerPage) => {
+const getBoards = async (userId, page, itemsPerPage, queryFilters) => {
   try {
     const queryConditions = [
       { _destroy: false },
@@ -192,6 +192,18 @@ const getBoards = async (userId, page, itemsPerPage) => {
         ]
       }
     ];
+
+    if (queryFilters) {
+      Object.keys(queryFilters).forEach(key => {
+
+        // Phan biet hoa thuong
+        // queryConditions.push({ [key]: { $regex: queryFilters[key] } })
+
+        // Ko phan biet
+        queryConditions.push({ [key]: { $regex: new RegExp(queryFilters[key], 'i') } })
+      })
+    }
+
 
     const query = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate(
       [
