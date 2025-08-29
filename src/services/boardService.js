@@ -1,11 +1,10 @@
-import { slugify } from "~/utils/formatters";
+import { cloneDeep } from "lodash";
 import { boardModel } from "~/models/boardModel";
-import ApiError from "~/utils/ApiError";
-import { cloneDeep, get } from "lodash";
-import { columnModel } from "~/models/columnModel";
 import { cardModel } from "~/models/cardModel";
-import { nextPowerTwo } from "add";
+import { columnModel } from "~/models/columnModel";
+import ApiError from "~/utils/ApiError";
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from "~/utils/constants";
+import { slugify } from "~/utils/formatters";
 
 const createNew = async (userId, reqBody) => {
   // eslint-disable-next-line no-useless-catch

@@ -7,9 +7,7 @@ import { BOARD_TYPE } from "~/utils/constants";
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
 import { cardModel } from "./cardModel";
 import { columnModel } from "./columnModel";
-import ApiError from "~/utils/ApiError";
 import { userModel } from "./userModel";
-import { verify } from "jsonwebtoken";
 
 const BOARD_COLLECTION_NAME = 'boards'
 const BOARD_COLLECTION_SCHEMA = Joi.object({
